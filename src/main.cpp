@@ -4,8 +4,15 @@
 #include <Arduino.h>
 #include <Wire.h>
 
+struct ToSerialize {
+  unsigned char header1 = 'y';
+  unsigned char header2 = 'o';
+  Vector<4> x; // TODO: should the biases at some point
+  unsigned char tail = '\n';
+} buf;
+
 // state
-Vector<4> x; // TODO: should the biases at some point
+auto &x = buf.x;
 Matrix<4, 4> F_;
 
 // covariances etc
@@ -29,13 +36,9 @@ void setup() {
   Serial.begin(9600);
   Wire.begin();
 
-  if (!gyro.init()) {
-    Serial.println("Failed to autodetect gyro type!");
-    while (1)
-      ;
-  }
-
+  gyro.init();
   gyro.enableDefault();
+
   compass.init();
   compass.enableDefault();
 
@@ -74,6 +77,7 @@ int main() {
   setup();
 
   auto t = micros();
+  unsigned int count = 0;
   for (;;) {
     gyro.read();
     // compass.read();
@@ -83,6 +87,11 @@ int main() {
     x = F_ * x;
     x.normalize();
     P = F_ * P * F_.transpose();
+
+    if (++count == 100) {
+      count = 0;
+      Serial.write(reinterpret_cast<unsigned char *>(&buf), sizeof(buf));
+    }
 
     t = nt;
   }
