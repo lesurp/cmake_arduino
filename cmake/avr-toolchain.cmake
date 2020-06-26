@@ -4,7 +4,7 @@ set(CMAKE_C_COMPILER avr-gcc)
 set(CMAKE_CXX_COMPILER avr-g++)
 
 set(CSTANDARD "-std=c11")
-set(CXXSTANDARD "-std=c++11")
+set(CXXSTANDARD "-std=c++14")
 set(CDEBUG "-gstabs")
 # Many Wstrict-prototypes in arduinocore headers...
 set(CWARN "-Wall -Wextra")
