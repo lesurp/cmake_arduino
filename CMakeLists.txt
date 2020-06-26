@@ -8,6 +8,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(DEVICE_NAME "/dev/ttyUSB0" CACHE STRING "Name of the device on host machine")
 set(CHIP_ID "m328p" CACHE STRING "Name of the device's chip")
 set(ARDUINO_VARIANT "eightanaloginputs" CACHE STRING "Name of the device variant")
+set(OPTIMIZATION_LEVEL "-O2" CACHE STRING "O3 makes the binary HUGE! :<")
 
 ### Fetch and create target for arduinocore
 include(fetch_arduinocore)
