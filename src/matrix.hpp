@@ -30,15 +30,20 @@ template <int R, int C> struct Matrix : MatrixBase<Matrix<R, C>> {
   float &operator()(int i, int j) { return data[i * C + j]; }
   float operator()(int i, int j) const { return data[i * C + j]; }
 
-  void normalize() {
-    float norm = 0;
+  float squared_norm() const {
+    float sqn = 0;
     for (int i = 0; i < R * C; ++i) {
-      norm += data[i] * data[i];
+      sqn += data[i] * data[i];
     }
-    norm = sqrt(norm);
-    float norm_inv = 1 / norm;
+    return sqn;
+  }
+
+  float norm() const { return sqrt(squared_norm()); }
+
+  void normalize() {
+    auto n = 1.0 / norm();
     for (int i = 0; i < R * C; ++i) {
-      data[i] *= norm_inv;
+      data[i] *= n;
     }
   }
 };
