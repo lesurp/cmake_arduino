@@ -20,3 +20,6 @@ target_link_libraries(main arduino_core arduino_wire)
 
 add_target_executable(test src/test.cpp)
 target_link_libraries(test arduino_core)
+
+add_target_executable(calib_gyro src/calib_gyro.cpp src/L3G.cpp)
+target_link_libraries(calib_gyro arduino_core arduino_wire)
