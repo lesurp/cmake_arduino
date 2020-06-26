@@ -1,11 +1,17 @@
 #include "L3G.h"
 #include "LSM303.h"
+#include "matrix.hpp"
 #include <Arduino.h>
 #include <Wire.h>
 
 // state
-float x[4]; // TODO: should the biases at some point
-float fx[4];
+Vector<4> x; // TODO: should the biases at some point
+Matrix<4, 4> F_;
+
+// covariances etc
+float Q; // Q = K * I, so we just keep that one scalar (gyro)
+float R; // same thing (accel)
+Matrix<4, 4> P;
 
 // gyro / accel
 float w[3];
@@ -13,18 +19,11 @@ float bw[3]; // TODO: constant for now
 float a[3];
 float ba[3];
 
-// covariances
-float Q; // Q = K * I, so we just keep that one scalar (gyro)
-float R; // same thing (accel)
-float P[9];
-
 // sensors
 L3G gyro;
 LSM303 compass;
 
 // output buffer
-char report[80];
-
 void setup() {
   init();
   Serial.begin(9600);
@@ -39,50 +38,53 @@ void setup() {
   gyro.enableDefault();
   compass.init();
   compass.enableDefault();
+
+  x(0) = 1;
+  F_(0) = 1;
+  F_(5) = 1;
+  F_(10) = 1;
+  F_(15) = 1;
 }
 
-void f(float *x, float *w, float dt, float *fx) {
-  auto wx2 = w[0] * w[0];
-  auto wy2 = w[1] * w[1];
-  auto wz2 = w[2] * w[2];
+void fill_F(Matrix<4, 4> &F_, float gx, float gy, float gz, float dt) {
+  float ewx = dt * 0.5 * gx;
+  float ewy = dt * 0.5 * gy;
+  float ewz = dt * 0.5 * gz;
 
-  // small angles assumption means [cos(a) sin(a)/|a| * dt*w/2]
-  // becomes [1 w]
-  float ew[4];
-  ew[0] = 1;
-  ew[1] = dt * 0.5 * w[0];
-  ew[2] = dt * 0.5 * w[1];
-  ew[3] = dt * 0.5 * w[2];
+  F_(1) = -ewx;
+  F_(2) = -ewy;
+  F_(3) = -ewz;
 
-  fx[0] = x[0] * ew[0] - x[1] * ew[1] - x[2] * ew[2] - x[3] * ew[3];
-  fx[1] = x[0] * ew[1] + x[1] * ew[0] + x[2] * ew[3] - x[3] * ew[2];
-  fx[2] = x[0] * ew[2] - x[1] * ew[1] + x[2] * ew[0] + x[3] * ew[3];
-  fx[3] = x[0] * ew[3] + x[1] * ew[2] - x[2] * ew[1] + x[3] * ew[0];
+  F_(6) = ewz;
+  F_(7) = -ewy;
+
+  F_(11) = ewx;
+
+  F_(4) = -F_(1);
+  F_(8) = -F_(2);
+  F_(12) = -F_(3);
+
+  F_(9) = -F_(6);
+  F_(13) = -F_(7);
+
+  F_(14) = -F_(8);
 }
 
 int main() {
   setup();
 
+  auto t = micros();
   for (;;) {
     gyro.read();
+    // compass.read();
 
-    Serial.print("G ");
-    Serial.print("X: ");
-    Serial.print((int)gyro.g.x);
-    Serial.print(" Y: ");
-    Serial.print((int)gyro.g.y);
-    Serial.print(" Z: ");
-    Serial.println((int)gyro.g.z);
+    auto nt = micros();
+    fill_F(F_, gyro.g.x, gyro.g.y, gyro.g.z, nt - t);
+    x = F_ * x;
+    x.normalize();
+    P = F_ * P * F_.transpose();
 
-    compass.read();
-
-    snprintf(report, sizeof(report), "A: %6d %6d %6d    M: %6d %6d %6d",
-             compass.a.x, compass.a.y, compass.a.z, compass.m.x, compass.m.y,
-             compass.m.z);
-
-    Serial.println(report);
-
-    delay(100);
+    t = nt;
   }
   return 0;
 }
