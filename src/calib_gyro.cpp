@@ -13,24 +13,24 @@ void setup() {
 }
 
 constexpr int N = 300;
-float values[N];
+int16_t values[N];
 
-void calib(float *data, float &mean, float &var) {
-  float sum = 0.0;
+void calib(int16_t *data, double &mean, double &var) {
+  double sum = 0.0;
   for (int i = 0; i < N; ++i) {
     sum += data[i];
   }
   mean = sum / N;
 
-  float sum_squared = 0.0;
+  double sum_squared = 0.0;
   for (int i = 0; i < N; ++i) {
-    float delta = mean - data[i];
+    double delta = mean - data[i];
     sum_squared += delta * delta;
   }
   var = sum_squared / (N - 1); // unbiased
 }
 
-auto calib_with_fn(float (*f)(), char const *c) {
+auto calib_with_fn(int16_t (*f)(), char const *c) {
   Serial.print("Starting to calibrate: ");
   Serial.print(c);
   Serial.print("\n");
@@ -43,8 +43,8 @@ auto calib_with_fn(float (*f)(), char const *c) {
   Serial.print("Done!");
   Serial.print("\n");
 
-  float mean;
-  float var;
+  double mean;
+  double var;
 
   calib(values, mean, var);
 
@@ -59,17 +59,17 @@ auto calib_with_fn(float (*f)(), char const *c) {
   };
 }
 
-float gx_fn() {
+int16_t gx_fn() {
   gyro.read();
   return gyro.g.x;
 }
 
-float gy_fn() {
+int16_t gy_fn() {
   gyro.read();
   return gyro.g.y;
 }
 
-float gz_fn() {
+int16_t gz_fn() {
   gyro.read();
   return gyro.g.z;
 }
