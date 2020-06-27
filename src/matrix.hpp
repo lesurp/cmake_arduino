@@ -86,6 +86,18 @@ auto operator*(Lhs const &lhs, Rhs const &rhs) {
   }
   return out;
 }
+
+template <typename Lhs, typename Rhs>
+auto operator+(Lhs const &lhs, Rhs const &rhs) {
+  static_assert(Lhs::row() == Rhs::row(), "Wrong matrix sizes!");
+  static_assert(Lhs::col() == Rhs::col(), "Wrong matrix sizes!");
+  Matrix<Lhs::row(), Lhs::col()> out;
+  for (int i = 0; i < Lhs::row() * Lhs::col(); ++i) {
+    out(i) = lhs(i) + rhs(i);
+  }
+  return out;
+}
+
 template <typename Concrete>
 MatrixTranspose<Concrete> MatrixBase<Concrete>::transpose() {
   return MatrixTranspose<Concrete>(*static_cast<Concrete *>(this));
